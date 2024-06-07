@@ -4,6 +4,7 @@ coverage
 coverage.json
 typechain
 .deps
+.states
 
 #Hardhat files
 cache
