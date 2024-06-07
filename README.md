@@ -1,3 +1,5 @@
+[![sol-test-js](https://github.com/remix-project-org/remix-reward/actions/workflows/run-test.yml/badge.svg)](https://github.com/remix-project-org/remix-reward/actions/workflows/run-test.yml)
+
 # Remix Reward
 
 deployed at 0x5d470270e889b61c08C51784cDC73442c4554011 on Optimism
