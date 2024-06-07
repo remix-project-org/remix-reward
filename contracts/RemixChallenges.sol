@@ -26,7 +26,7 @@ contract RemixChallenges is Initializable, AccessControlUpgradeable, UUPSUpgrade
     mapping (bytes => uint) public publishers;
 
     address public rewardContract;
-
+    
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {}
 
@@ -37,10 +37,20 @@ contract RemixChallenges is Initializable, AccessControlUpgradeable, UUPSUpgrade
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    /** 
+      * @notice This function sets the address of the reward contract.
+      * @dev Only the default admin can call this function.
+      * @param _reward The address of the reward contract.
+      */
     function setRewardContract (address _reward) public onlyRole(DEFAULT_ADMIN_ROLE) {
         rewardContract = _reward;
     }
 
+    /** 
+      * @notice This function sets a challenge with a given struct Challenge in storage.
+      * @dev Only the default admin can call this function.
+      * @param challenge The struct Challenge that contains all necessary data for a challenge.
+      */
     function setChallenge(Challenge calldata challenge) public onlyRole(DEFAULT_ADMIN_ROLE)  {
         challenges[challengeIndex] = challenge;
         challenges[challengeIndex].publishersCount = 0;
@@ -48,6 +58,12 @@ contract RemixChallenges is Initializable, AccessControlUpgradeable, UUPSUpgrade
         challengeIndex++;
     }
 
+    /** 
+      * @notice This function is used by publishers to publish their proofs for a given challenge.
+      * @param index The index of the challenge in the challenges mapping.
+      * @param proof The struct Proof containing all necessary data for a proof. This includes values a, b, c and d.
+      * @param input The array of 3 uints containing additional input data for a challenge. This includes a challengeHash, a random number (r) and a nullifier (s).
+      */
     function publishChallenge (uint index, ZKVerifier.Proof memory proof, uint[3] memory input) public {
         require(rewardContract != address(0), "rewardontract not set");
         Challenge storage challenge = challenges[index];
