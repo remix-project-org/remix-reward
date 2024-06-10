@@ -65,7 +65,7 @@ contract RemixChallenges is Initializable, AccessControlUpgradeable, UUPSUpgrade
       * @param input The array of 3 uints containing additional input data for a challenge. This includes a challengeHash, a random number (r) and a nullifier (s).
       */
     function publishChallenge (uint index, ZKVerifier.Proof memory proof, uint[3] memory input) public {
-        require(rewardContract != address(0), "rewardontract not set");
+        require(rewardContract != address(0), "reward contract not set");
         Challenge storage challenge = challenges[index];
         require(challenge.set == 1, "challenge not set");
         require(challenge.verifier != address(0), "no challenge started");
@@ -84,7 +84,7 @@ contract RemixChallenges is Initializable, AccessControlUpgradeable, UUPSUpgrade
         require(success, "the call to the verifier failed");
 
         (bool verified) = abi.decode(data, (bool));        
-        require(verified, "the provided proof isn't valid");        
+        require(verified, "the provided proof is not valid");        
         
         challenge.publishersCount++;
 
