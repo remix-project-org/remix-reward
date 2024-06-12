@@ -18,7 +18,7 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
 
     CountersUpgradeable.Counter private _tokenIdCounter;
     mapping (string => bool) types;
-    mapping (uint => TokenData) public tokensData;
+    mapping (uint256 => TokenData) public tokensData;
     mapping (address => uint) public allowedMinting;
     bytes public contributorHash;
     string public baseURI;
@@ -26,9 +26,9 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
     /* NO LONGER USED */
     address public zkVerifier;
     uint[2] public zkChallenge; // only the first item is used.
-    uint public zkChallengeNonce;
-    uint public zkMax;
-    uint public publishersAmount;
+    uint256 public zkChallengeNonce;
+    uint256 public zkMax;
+    uint256 public publishersAmount;
     mapping (bytes => uint) public nullifiers;
     mapping (bytes => uint) public publishers;
 
@@ -116,14 +116,14 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
         contributorHash = hash;
     }
 
-    function safeMint(address to, string calldata tokenType, string memory payload, bytes memory hash, uint mintGrant) 
+    function safeMint(address to, string calldata tokenType, string memory payload, bytes memory hash, uint256 mintGrant) 
         public 
         canSafeMint {
         addType(tokenType);
         mintBadge(to, tokenType, payload, hash, mintGrant);
     }
 
-    function mintBadge(address to, string memory tokenType, string memory payload, bytes memory hash, uint mintGrant) private {
+    function mintBadge(address to, string memory tokenType, string memory payload, bytes memory hash, uint256 mintGrant) private {
         require(types[tokenType], "type should be declared");
         // require(bytes(payload).length != 0, "payload can't be empty");
         
@@ -139,7 +139,7 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
         }
     }
 
-    function assignHash(uint tokenId, bytes calldata hash) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function assignHash(uint256 tokenId, bytes calldata hash) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _requireMinted(tokenId);
         require(tokensData[tokenId].hash.length == 0, "hash already set");
         tokensData[tokenId].hash = hash;
@@ -171,8 +171,8 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
         revokeRole(TRAINER_ROLE, trainer);
     }
 
-    function grantRemixersMinting (address[] calldata remixers, uint amount) public isTrainer()  {
-        for (uint k = 0; k < remixers.length; k++) {
+    function grantRemixersMinting (address[] calldata remixers, uint256 amount) public isTrainer()  {
+        for (uint256 k = 0; k < remixers.length; k++) {
             allowedMinting[remixers[k]] += amount;
         }
     }

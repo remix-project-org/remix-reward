@@ -10,17 +10,17 @@ import "./Proof.sol";
 contract RemixChallenges is Initializable, AccessControlUpgradeable, UUPSUpgradeable {
     
     struct Challenge {
-        uint set;
-        uint publishersCount;
+        uint256 set;
+        uint256 publishersCount;
         address verifier;
-        uint challengeHash;
-        uint max; 
+        uint256 challengeHash;
+        uint256 max; 
         string tokenType; 
         string payload; 
         bytes hash;
     }
-    uint public challengeIndex;
-    mapping  (uint => Challenge) public challenges;
+    uint256 public challengeIndex;
+    mapping  (uint256 => Challenge) public challenges;
 
     mapping (bytes => uint) public nullifiers;
     mapping (bytes => uint) public publishers;
@@ -64,7 +64,7 @@ contract RemixChallenges is Initializable, AccessControlUpgradeable, UUPSUpgrade
       * @param proof The struct Proof containing all necessary data for a proof. This includes values a, b, c and d.
       * @param input The array of 3 uints containing additional input data for a challenge. This includes a challengeHash, a random number (r) and a nullifier (s).
       */
-    function publishChallenge (uint index, ZKVerifier.Proof memory proof, uint[3] memory input) public {
+    function publishChallenge (uint256 index, ZKVerifier.Proof memory proof, uint[3] memory input) public {
         require(rewardContract != address(0), "reward contract not set");
         Challenge storage challenge = challenges[index];
         require(challenge.set == 1, "challenge not set");
@@ -91,7 +91,7 @@ contract RemixChallenges is Initializable, AccessControlUpgradeable, UUPSUpgrade
         nullifiers[nullifier] = 1;
         publishers[publisher] = 1;
 
-        // function safeMint(address to, string memory tokenType, string memory payload, bytes memory hash, uint mintGrant) public onlyRole(DEFAULT_ADMIN_ROLE)
+        // function safeMint(address to, string memory tokenType, string memory payload, bytes memory hash, uint256 mintGrant) public onlyRole(DEFAULT_ADMIN_ROLE)
         (bool successMint, bytes memory dataMint) = rewardContract.call{ value: 0 }(
             abi.encodeWithSignature("safeMint(address,string,string,bytes,uint256)", 
                 msg.sender, 
