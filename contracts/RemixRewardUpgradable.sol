@@ -52,7 +52,7 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
     }
 
     modifier challengeProvider() {
-        require(hasRole(CHALLENGE_PROVIDER_ROLE, msg.sender), "Caller is not a trainer, no TRAINER_ROLE");
+        require(hasRole(CHALLENGE_PROVIDER_ROLE, msg.sender), "Caller is not a challenge provider, no CHALLENGE_PROVIDER_ROLE");
         _;
     }
 
@@ -162,6 +162,7 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
     }
 
     function addTrainer (address trainer) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(trainer != address(0));
         trainers[trainer] = 1;
         grantRole(TRAINER_ROLE, trainer);
     }
