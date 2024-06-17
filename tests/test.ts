@@ -164,7 +164,7 @@ describe("Challenge", function () {
             "0x11b3ef927dfb8c935901ccbcc2b8e7c57049e1bb3eafff67cd4dd44950759f17",
             "0x1c79b1dd1e858f524854357a191cdf40716297fffb8c5503edd0d5801ab86e9d"
         ]
-    await expect(remixChallenges.connect(betatester2).publishChallenge(0, proofStruct, proofs.proof1[3])).to.be.revertedWith("the provided proof isn't valid")
+    await expect(remixChallenges.connect(betatester2).publishChallenge(0, proofStruct, proofs.proof1[3])).to.be.revertedWith("the provided proof is not valid")
   });
 
   it("Should accept a challenge", async function () {   
@@ -264,7 +264,7 @@ describe("Challenge", function () {
       proofs.proof1[3][1],
       "0x00000000000000000000000000000000d421714eddc84195ee8f80d5379cf6fa", // invalid
     ]
-    await expect(remixChallenges.connect(betatester2).publishChallenge(1, proofStruct, invalidSignals)).to.be.revertedWith("the provided proof isn't valid")
+    await expect(remixChallenges.connect(betatester2).publishChallenge(1, proofStruct, invalidSignals)).to.be.revertedWith("the provided proof is not valid")
   });
 
   it("Should accept again a challenge", async function () {   
