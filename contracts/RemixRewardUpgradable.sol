@@ -10,8 +10,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Burnab
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-import "./Proof.sol";
-
 /**
  * @custom:dev-run-script ./scripts/deploy.js
  */
@@ -20,24 +18,26 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
 
     CountersUpgradeable.Counter private _tokenIdCounter;
     mapping (string => bool) types;
-    mapping (uint => TokenData) public tokensData;
-    mapping (address => uint) public allowedMinting;
+    mapping (uint256 => TokenData) public tokensData;
+    mapping (address => uint256) public allowedMinting;
     bytes public contributorHash;
     string public baseURI;
     
+    /* NO LONGER USED */
     address public zkVerifier;
-    uint[2] public zkChallenge; // only the first item is used.
-    uint public zkChallengeNonce;
-    uint public zkMax;
-    uint public publishersAmount;
-    mapping (bytes => uint) public nullifiers;
-    mapping (bytes => uint) public publishers;
+    uint256[2] public zkChallenge; // only the first item is used.
+    uint256 public zkChallengeNonce;
+    uint256 public zkMax;
+    uint256 public publishersAmount;
+    mapping (bytes => uint256) public nullifiers;
+    mapping (bytes => uint256) public publishers;
 
     string public zkChallengeTokenType;
     string public zkChallengePayload;
     bytes public zkChallengeHash;
+    /* NO LONGER USED */
 
-    mapping(address => uint) public trainers;
+    mapping(address => uint256) public trainers;
 
     struct TokenData {
         string payload;
@@ -47,8 +47,30 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
 
     modifier isTrainer() {
         require(trainers[msg.sender] == 1, "Caller is not a trainer");
+        require(hasRole(TRAINER_ROLE, msg.sender), "Caller is not a trainer, no TRAINER_ROLE");
         _;
     }
+
+    modifier challengeProvider() {
+        require(hasRole(CHALLENGE_PROVIDER_ROLE, msg.sender), "Caller is not a challenge provider, no CHALLENGE_PROVIDER_ROLE");
+        _;
+    }
+
+    modifier isAdmin() {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
+        _;
+    }
+
+    modifier canSafeMint() {
+        require(
+            hasRole(CHALLENGE_PROVIDER_ROLE, msg.sender) || 
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 
+            "Caller is neither admin nor a challenge provider");
+        _;
+    }
+
+    bytes32 public constant TRAINER_ROLE = 0x0000000000000000000000000000000000000000000000000000000000000001;
+    bytes32 public constant CHALLENGE_PROVIDER_ROLE = 0x0000000000000000000000000000000000000000000000000000000000000002;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {}
@@ -82,7 +104,7 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
         override
     {}
 
-    function addType (string calldata tokenType) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function addType (string calldata tokenType) public canSafeMint {
         types[tokenType] = true;
     }
 
@@ -94,11 +116,14 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
         contributorHash = hash;
     }
 
-    function safeMint(address to, string memory tokenType, string memory payload, bytes memory hash, uint mintGrant) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function safeMint(address to, string calldata tokenType, string memory payload, bytes memory hash, uint256 mintGrant) 
+        public 
+        canSafeMint {
+        addType(tokenType);
         mintBadge(to, tokenType, payload, hash, mintGrant);
     }
 
-    function mintBadge(address to, string memory tokenType, string memory payload, bytes memory hash, uint mintGrant) private {
+    function mintBadge(address to, string memory tokenType, string memory payload, bytes memory hash, uint256 mintGrant) private {
         require(types[tokenType], "type should be declared");
         // require(bytes(payload).length != 0, "payload can't be empty");
         
@@ -114,7 +139,7 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
         }
     }
 
-    function assignHash(uint tokenId, bytes calldata hash) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function assignHash(uint256 tokenId, bytes calldata hash) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _requireMinted(tokenId);
         require(tokensData[tokenId].hash.length == 0, "hash already set");
         tokensData[tokenId].hash = hash;
@@ -137,59 +162,24 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
     }
 
     function addTrainer (address trainer) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(trainer != address(0));
         trainers[trainer] = 1;
+        grantRole(TRAINER_ROLE, trainer);
     }
 
     function removeTrainer (address trainer) public onlyRole(DEFAULT_ADMIN_ROLE) {
         delete trainers[trainer];
+        revokeRole(TRAINER_ROLE, trainer);
     }
 
-    function grantRemixersMinting (address[] calldata remixers, uint amount) public isTrainer()  {
-        for (uint k = 0; k < remixers.length; k++) {
+    function grantRemixersMinting (address[] calldata remixers, uint256 amount) public isTrainer()  {
+        for (uint256 k = 0; k < remixers.length; k++) {
             allowedMinting[remixers[k]] += amount;
         }
     }
 
-    function setChallenge(address verifier, uint[1] calldata challenge, uint max, string calldata tokenType, string calldata payload, bytes calldata hash) public onlyRole(DEFAULT_ADMIN_ROLE)  {
-        addType(tokenType);
-        zkVerifier = verifier;
-        zkChallenge = challenge;
-        zkChallengeTokenType = tokenType;
-        zkChallengePayload = payload;
-        zkChallengeHash = hash;
-        zkMax = max;
-        publishersAmount = 0;
-        zkChallengeNonce++;
-    }
-
-    function publishChallenge (ZKVerifier.Proof memory proof, uint[3] memory input) public {
-        require(zkVerifier != address(0), "no challenge started");
-        require(publishersAmount < zkMax, "publishers reached maximum amount");
-        bytes memory nullifier = abi.encodePacked(zkChallengeNonce, input[2]);
-        bytes memory publisher = abi.encodePacked(zkChallengeNonce, msg.sender);
-        require(nullifiers[nullifier] == 0, "proof already published");
-        require(publishers[publisher] == 0, "current publisher has already submitted");
-        require(zkChallenge[0] == input[1], "provided challenge is not valid");
-        
-        // function verifyTx(Proof memory proof, uint[3] memory input) public view returns (bool r)
-        (bool success, bytes memory data) = zkVerifier.call{ value: 0 }(
-            abi.encodeWithSignature("verifyProof(uint256[2],uint256[2][2],uint256[2],uint256[3])", proof.a, proof.b, proof.c, input)
-        );
-        
-        require(success, "the call to the verifier failed");
-
-        (bool verified) = abi.decode(data, (bool));        
-        require(verified, "the provided proof isn't valid");        
-        
-        mintBadge(msg.sender, zkChallengeTokenType, zkChallengePayload, zkChallengeHash, 1);
-        publishersAmount++;
-
-        nullifiers[nullifier] = 1;
-        publishers[publisher] = 1;        
-    }
-
     function version () public pure returns (string memory) {
-        return "2.6.0";
+        return "2.7.0";
     }
 
     // The following functions are overrides required by Solidity.
