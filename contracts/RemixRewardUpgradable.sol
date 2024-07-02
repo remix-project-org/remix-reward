@@ -19,25 +19,25 @@ contract Remix is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable,
     CountersUpgradeable.Counter private _tokenIdCounter;
     mapping (string => bool) types;
     mapping (uint256 => TokenData) public tokensData;
-    mapping (address => uint) public allowedMinting;
+    mapping (address => uint256) public allowedMinting;
     bytes public contributorHash;
     string public baseURI;
     
     /* NO LONGER USED */
     address public zkVerifier;
-    uint[2] public zkChallenge; // only the first item is used.
+    uint256[2] public zkChallenge; // only the first item is used.
     uint256 public zkChallengeNonce;
     uint256 public zkMax;
     uint256 public publishersAmount;
-    mapping (bytes => uint) public nullifiers;
-    mapping (bytes => uint) public publishers;
+    mapping (bytes => uint256) public nullifiers;
+    mapping (bytes => uint256) public publishers;
 
     string public zkChallengeTokenType;
     string public zkChallengePayload;
     bytes public zkChallengeHash;
     /* NO LONGER USED */
 
-    mapping(address => uint) public trainers;
+    mapping(address => uint256) public trainers;
 
     struct TokenData {
         string payload;
